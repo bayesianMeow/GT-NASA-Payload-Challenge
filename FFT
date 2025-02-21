@@ -20,7 +20,8 @@ def apply_fft(data, sampling_rate):
 
 # Decompose noise and signal
 def decompose_noise(fft_result, fft_freqs, noise_threshold):
-    noise_mask = np.abs(fft_result) < noise_threshold
+    magnitude = np.abs(fft_result)
+    noise_mask = magnitude < noise_threshold
     signal_mask = ~noise_mask
 
     noise_fft = fft_result * noise_mask
@@ -30,7 +31,7 @@ def decompose_noise(fft_result, fft_freqs, noise_threshold):
 
 # Reconstruct time-domain signal from FFT
 def inverse_fft(fft_result):
-    return np.fft.ifft(fft_result)
+    return np.real(np.fft.ifft(fft_result))  # Take the real part for real-valued signals
 
 # Plot the frequency spectrum
 def plot_spectrum(fft_freqs, fft_result, title):
