@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+
+
 # Parameters
 sampling_rate = 1000000  # 1 MHz sampling rate
 file_path = 'raw_data.bin'  # Path to the binary file containing raw data
@@ -68,3 +70,4 @@ def process_data(file_path, sampling_rate, noise_threshold):
 # Example usage
 noise_threshold = 100  # Adjust this threshold based on your data
 clean_signal, noise_signal = process_data(file_path, sampling_rate, noise_threshold)
+
