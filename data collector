@@ -1,0 +1,90 @@
+#!/usr/bin/env python3
+import os
+import time
+from rtlsdr import RtlSdr
+import numpy as np
+from datetime import datetime
+
+# Configuration
+SAMPLE_RATE = 2.4e6  # Sample rate in Hz
+CENTER_FREQ = 100e6  # Center frequency in Hz
+GAIN = 'auto'        # Gain setting (can be 'auto' or a number in dB)
+RECORDING_DURATION = 10  # Duration of each recording in seconds
+OUTPUT_DIR = "/home/FFTprogram/rawdata"  # Directory to store recordings
+
+def create_output_dir():
+    """Create output directory if it doesn't exist"""
+    if not os.path.exists(OUTPUT_DIR):
+        os.makedirs(OUTPUT_DIR)
+        print(f"Created directory: {OUTPUT_DIR}")
+
+def get_timestamp():
+    """Return current timestamp in a filename-friendly format"""
+    return datetime.now().strftime("%Y%m%d_%H%M%S")
+
+def collect_and_save_data():
+    """Collect samples from SDR and save to file"""
+    sdr = RtlSdr()
+    
+    # Configure SDR
+    sdr.sample_rate = SAMPLE_RATE
+    sdr.center_freq = CENTER_FREQ
+    sdr.gain = GAIN
+    
+    try:
+        # Calculate number of samples to collect
+        num_samples = int(SAMPLE_RATE * RECORDING_DURATION)
+        
+        print(f"Collecting {num_samples} samples...")
+        samples = sdr.read_samples(num_samples)
+        
+        # Convert to numpy array for efficient storage
+        samples = np.array(samples, dtype=np.complex64)
+        
+        # Generate filename
+        timestamp = get_timestamp()
+        filename = os.path.join(OUTPUT_DIR, f"sdr_{timestamp}.bin")
+        
+        # Save to file
+        samples.tofile(filename)
+        print(f"Saved data to: {filename}")
+        
+        # Also save metadata
+        metadata = {
+            'sample_rate': SAMPLE_RATE,
+            'center_freq': CENTER_FREQ,
+            'gain': GAIN,
+            'timestamp': timestamp,
+            'duration': RECORDING_DURATION,
+            'num_samples': num_samples
+        }
+        
+        metadata_filename = os.path.join(OUTPUT_DIR, f"metadata_{timestamp}.txt")
+        with open(metadata_filename, 'w') as f:
+            for key, value in metadata.items():
+                f.write(f"{key}: {value}\n")
+        
+        print(f"Saved metadata to: {metadata_filename}")
+        
+    finally:
+        sdr.close()
+
+def main():
+    print("NESDR Nano 3 Data Collection Program")
+    print(f"Sample Rate: {SAMPLE_RATE/1e6} MHz")
+    print(f"Center Frequency: {CENTER_FREQ/1e6} MHz")
+    print(f"Gain: {GAIN}")
+    print(f"Recording Duration: {RECORDING_DURATION} seconds")
+    
+    create_output_dir()
+    
+    try:
+        while True:
+            collect_and_save_data()
+            # Optional: Add delay between recordings if needed
+            # time.sleep(1)
+    except KeyboardInterrupt:
+        print("\nProgram terminated by user")
+
+if __name__ == "__main__":
+    main()
